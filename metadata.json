@@ -1,0 +1,6 @@
+{
+  "name": "FacturaClara AI - Analizador Inteligente de Facturas del Hogar",
+  "description": "Asistente experto en análisis financiero del hogar y extracción multimodal de facturas de luz, gas, agua, internet y expensas. Detección de anomalías, aumentos y traducción en lenguaje cotidiano.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
