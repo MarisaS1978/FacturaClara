@@ -5,6 +5,7 @@ interface HeaderProps {
   historyCount: number;
   onOpenHistory: () => void;
   onOpenPortals: () => void;
+  onOpenSavings: () => void;
   onNewAnalysis: () => void;
   hasActiveBill: boolean;
 }
@@ -13,6 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
   historyCount,
   onOpenHistory,
   onOpenPortals,
+  onOpenSavings,
   onNewAnalysis,
   hasActiveBill,
 }) => {
@@ -45,8 +47,18 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Action buttons */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
+            onClick={onOpenSavings}
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400/50 rounded-xl text-xs font-semibold transition-colors min-h-[36px]"
+            title="Ver consejos de ahorro del hogar"
+          >
+            <span className="shrink-0 text-sm">💡</span>
+            <span className="hidden sm:inline">Consejos de Ahorro</span>
+            <span className="hidden min-[480px]:inline sm:hidden">Ahorro</span>
+          </button>
+
+          <button
             onClick={onOpenPortals}
-            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs font-semibold transition-colors min-h-[36px]"
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-xs font-semibold transition-colors min-h-[36px]"
             title="Ver páginas oficiales para descargar facturas y hacer reclamos"
           >
             <span className="shrink-0 text-sm">📥</span>

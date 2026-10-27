@@ -7,6 +7,7 @@ import { AnalysisDashboard } from './components/AnalysisDashboard';
 import { BillHistory } from './components/BillHistory';
 import { CameraModal } from './components/CameraModal';
 import { OfficialPortalsModal } from './components/OfficialPortalsModal';
+import { SavingsModal } from './components/SavingsModal';
 import { AnalysisRecord, SampleInvoice } from './types/bill';
 import { SAMPLE_BILLS } from './data/sampleBills';
 import { AlertCircle, RefreshCw, Zap } from 'lucide-react';
@@ -21,6 +22,7 @@ export default function App() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPortalsOpen, setIsPortalsOpen] = useState(false);
+  const [isSavingsOpen, setIsSavingsOpen] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   // Load history from localStorage
@@ -163,6 +165,7 @@ export default function App() {
         historyCount={records.length}
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenPortals={() => setIsPortalsOpen(true)}
+        onOpenSavings={() => setIsSavingsOpen(true)}
         onNewAnalysis={() => setCurrentRecord(null)}
         hasActiveBill={Boolean(currentRecord)}
       />
@@ -203,10 +206,18 @@ export default function App() {
             onSampleSelected={handleSampleSelected}
             onOpenCamera={() => setIsCameraOpen(true)}
             onOpenPortalsModal={() => setIsPortalsOpen(true)}
+            onOpenSavingsModal={() => setIsSavingsOpen(true)}
             isLoading={isAnalyzing}
           />
         )}
       </main>
+
+      {/* Savings Tips Modal */}
+      <SavingsModal
+        isOpen={isSavingsOpen}
+        onClose={() => setIsSavingsOpen(false)}
+        defaultService={currentRecord?.billData?.tipo_servicio}
+      />
 
       {/* Official Portals Directory Modal */}
       <OfficialPortalsModal
