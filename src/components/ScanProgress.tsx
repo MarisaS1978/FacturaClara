@@ -92,6 +92,12 @@ export const ScanProgress: React.FC<ScanProgressProps> = ({ previewUrl }) => {
           );
         })}
       </div>
+
+      {currentStepIndex >= 3 && (
+        <p className="text-center text-[11px] text-slate-400 mt-5 animate-pulse">
+          ⚡ Si hay alta demanda en los servidores, conectando automáticamente con canales de alta disponibilidad...
+        </p>
+      )}
     </div>
   );
 };

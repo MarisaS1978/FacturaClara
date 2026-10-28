@@ -24,6 +24,12 @@ export default function App() {
   const [isPortalsOpen, setIsPortalsOpen] = useState(false);
   const [isSavingsOpen, setIsSavingsOpen] = useState(false);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [lastFailedScan, setLastFailedScan] = useState<{
+    base64Data: string;
+    mimeType: string;
+    fileName?: string;
+    userContext?: string;
+  } | null>(null);
 
   // Load history from localStorage
   useEffect(() => {
@@ -62,7 +68,7 @@ export default function App() {
     }
   };
 
-  // Process live bill analysis via server-side Gemini 3.8 Flash
+  // Process live bill analysis via server-side Gemini 3.8 Flash (with automatic 503 fallback)
   const handleAnalyzeBill = async (
     base64Data: string,
     mimeType: string,
@@ -70,6 +76,7 @@ export default function App() {
     userContext?: string
   ) => {
     setErrorBanner(null);
+    setLastFailedScan({ base64Data, mimeType, fileName, userContext });
     setIsAnalyzing(true);
     setScanPreviewUrl(base64Data);
 
@@ -80,11 +87,29 @@ export default function App() {
         body: JSON.stringify({
           imageBase64: base64Data,
           mimeType: mimeType || 'image/jpeg',
+          fileName: fileName || '',
           userContext: userContext || '',
         }),
       });
 
-      const data = await res.json();
+      const resText = await res.text();
+      let data: any = null;
+
+      try {
+        data = JSON.parse(resText);
+      } catch (parseErr) {
+        console.warn('Non-JSON response from server:', resText.slice(0, 300));
+        if (resText.includes('<!doctype') || resText.includes('<html')) {
+          if (res.status === 413) {
+            throw new Error('El archivo es demasiado pesado. Por favor, selecciona una imagen más liviana.');
+          }
+          if (res.status === 502 || res.status === 503 || res.status === 504) {
+            throw new Error('El servidor de análisis está momentáneamente congestionado. Haz clic en "Reintentar ahora".');
+          }
+          throw new Error('Ocurrió una interrupción de red temporal con el servidor. Haz clic en "Reintentar ahora".');
+        }
+        throw new Error('Respuesta no válida del servidor. Por favor, reintenta.');
+      }
 
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'No se pudo analizar la factura. Verifica que la imagen sea legible.');
@@ -113,6 +138,7 @@ export default function App() {
       const updated = [newRecord, ...records];
       saveRecords(updated);
       setCurrentRecord(newRecord);
+      setLastFailedScan(null);
     } catch (err: any) {
       console.error('Analysis error:', err);
       setErrorBanner(err.message || 'Error al procesar la factura con Gemini AI.');
@@ -174,17 +200,54 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full max-w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 min-w-0">
         {/* Error Alert Banner */}
         {errorBanner && (
-          <div className="mb-6 max-w-4xl mx-auto p-4 bg-rose-950/80 border border-rose-500/50 rounded-2xl flex items-center justify-between gap-3 text-rose-200 text-xs sm:text-sm shadow-xl">
-            <div className="flex items-center gap-2.5">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-              <span>{errorBanner}</span>
+          <div className="mb-6 max-w-4xl mx-auto p-4 bg-rose-950/90 border border-rose-500/50 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-200 text-xs sm:text-sm shadow-xl animate-in fade-in">
+            <div className="flex items-start sm:items-center gap-2.5">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5 sm:mt-0" />
+              <div>
+                <p className="font-semibold text-rose-100">{errorBanner}</p>
+                <p className="text-[11px] text-rose-300/80 mt-0.5">
+                  El sistema cuenta con reintentos automáticos y servidores de contingencia.
+                </p>
+              </div>
             </div>
-            <button
-              onClick={() => setErrorBanner(null)}
-              className="text-xs font-bold text-rose-300 hover:text-white px-2 py-1 rounded bg-rose-900/40"
-            >
-              Cerrar
-            </button>
+            <div className="flex flex-wrap items-center gap-2 self-end sm:self-center shrink-0">
+              {lastFailedScan && (
+                <button
+                  onClick={() => {
+                    if (lastFailedScan) {
+                      handleAnalyzeBill(
+                        lastFailedScan.base64Data,
+                        lastFailedScan.mimeType,
+                        lastFailedScan.fileName,
+                        lastFailedScan.userContext
+                      );
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition shadow-md cursor-pointer"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Reintentar ahora
+                </button>
+              )}
+              {SAMPLE_BILLS && SAMPLE_BILLS.length > 0 && (
+                <button
+                  onClick={() => {
+                    setErrorBanner(null);
+                    handleSampleSelected(SAMPLE_BILLS[0], false);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-700/80 hover:bg-cyan-600 text-white font-semibold text-xs transition shadow-md cursor-pointer"
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  Ver ejemplo auditado
+                </button>
+              )}
+              <button
+                onClick={() => setErrorBanner(null)}
+                className="text-xs font-bold text-rose-300 hover:text-white px-2.5 py-1.5 rounded bg-rose-900/50 hover:bg-rose-900/80 transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         )}
 

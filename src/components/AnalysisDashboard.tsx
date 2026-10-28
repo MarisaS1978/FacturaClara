@@ -68,7 +68,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   const regulatoryUrl = bill.canales_reclamo?.ente_regulador_web || directoryInfo?.regulatoryAgencyUrl || 'https://www.argentina.gob.ar/defensadelconsumidor';
 
   // Format currency
-  const formattedAmount = `${bill.moneda} ${bill.monto_total.toLocaleString('es-AR', {
+  const formattedAmount = `${bill.moneda || '$'} ${(bill.monto_total ?? 0).toLocaleString('es-AR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;

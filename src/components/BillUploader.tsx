@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Camera, FileText, Sparkles, AlertCircle, ArrowRight, Zap, Flame, Wifi, Building2, PiggyBank, Lightbulb } from 'lucide-react';
+import { Upload, Camera, FileText, Sparkles, AlertCircle, ArrowRight, Zap, Flame, Wifi, Building2, PiggyBank, Lightbulb, Loader2 } from 'lucide-react';
 import { SAMPLE_BILLS } from '../data/sampleBills';
 import { SampleInvoice } from '../types/bill';
+import { optimizeBillFile } from '../utils/imageOptimizer';
 
 interface BillUploaderProps {
   onFileSelected: (base64: string, mimeType: string, fileName?: string, userContext?: string) => void;
@@ -23,27 +24,29 @@ export const BillUploader: React.FC<BillUploaderProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [userContext, setUserContext] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const processFile = (file: File) => {
+  const processFile = async (file: File) => {
     setErrorMessage(null);
     if (!file) return;
 
-    // Validate size (max 20MB)
-    if (file.size > 20 * 1024 * 1024) {
-      setErrorMessage('El archivo supera los 20MB permitidos.');
+    // Validate size (max 25MB before optimization)
+    if (file.size > 25 * 1024 * 1024) {
+      setErrorMessage('El archivo supera los 25MB permitidos.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      onFileSelected(result, file.type || 'image/jpeg', file.name, userContext);
-    };
-    reader.onerror = () => {
-      setErrorMessage('Error al leer el archivo. Intenta con otro formato.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setIsOptimizing(true);
+      const optimized = await optimizeBillFile(file);
+      onFileSelected(optimized.dataUrl, optimized.mimeType, optimized.fileName, userContext);
+    } catch (err: any) {
+      console.error('Error optimizing invoice:', err);
+      setErrorMessage(err.message || 'Error al procesar el archivo. Prueba con otro formato.');
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -85,7 +88,7 @@ export const BillUploader: React.FC<BillUploaderProps> = ({
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-semibold">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Extracción Multimodal con Gemini 3.8 Flash</span>
+          <span>Extracción Multimodal con Gemini Flash AI</span>
         </div>
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight">
           Entiende tu factura sin <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-500 bg-clip-text text-transparent">letra chica</span>
@@ -133,17 +136,26 @@ export const BillUploader: React.FC<BillUploaderProps> = ({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
+              disabled={isLoading || isOptimizing}
               className="flex-1 w-full sm:w-auto px-6 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 active:scale-95 text-slate-950 font-bold text-xs sm:text-sm shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center gap-2 min-h-[44px]"
             >
-              <FileText className="w-4 h-4 shrink-0" />
-              <span>Seleccionar Archivo</span>
+              {isOptimizing ? (
+                <>
+                  <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                  <span>Optimizando imagen...</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4 shrink-0" />
+                  <span>Seleccionar Archivo</span>
+                </>
+              )}
             </button>
 
             <button
               type="button"
               onClick={onOpenCamera}
-              disabled={isLoading}
+              disabled={isLoading || isOptimizing}
               className="flex-1 w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-white font-semibold text-xs sm:text-sm border border-slate-700 transition-all flex items-center justify-center gap-2 min-h-[44px]"
             >
               <Camera className="w-4 h-4 text-cyan-400 shrink-0" />

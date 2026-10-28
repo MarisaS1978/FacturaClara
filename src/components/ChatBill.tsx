@@ -63,7 +63,14 @@ export const ChatBill: React.FC<ChatBillProps> = ({ billData }) => {
         }),
       });
 
-      const data = await response.json();
+      const resText = await response.text();
+      let data: any = null;
+      try {
+        data = JSON.parse(resText);
+      } catch (parseErr) {
+        throw new Error('El servicio de chat está momentáneamente congestionado. Por favor, reintenta tu pregunta.');
+      }
+
       if (data.success && data.reply) {
         const assistantMsg: ChatMessage = {
           id: `a-${Date.now()}`,

@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({
                 Factura<span className="text-cyan-400">Clara</span>
               </span>
               <span className="hidden min-[380px]:inline-block px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold bg-cyan-950 text-cyan-300 border border-cyan-800 rounded shrink-0">
-                AI 3.8
+                AI Vision
               </span>
             </div>
             <p className="text-[10px] sm:text-[11px] text-slate-400 hidden md:block truncate">
