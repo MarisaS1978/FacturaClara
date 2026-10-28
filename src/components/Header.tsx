@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, ShieldCheck, History, FileText, Zap, HelpCircle } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
   historyCount: number;
@@ -46,6 +47,8 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action buttons */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <PWAInstallButton />
+
           <button
             onClick={onOpenSavings}
             className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border border-emerald-500/30 hover:border-emerald-400/50 rounded-xl text-xs font-semibold transition-colors min-h-[36px]"
