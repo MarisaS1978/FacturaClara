@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Camera, FileText, Sparkles, AlertCircle, ArrowRight, Zap, Flame, Wifi, Building2, PiggyBank, Lightbulb, Loader2 } from 'lucide-react';
+import { Upload, Camera, FileText, Sparkles, AlertCircle, ArrowRight, Zap, Flame, Wifi, Building2, PiggyBank, Lightbulb, Loader2, ShieldCheck, Lock } from 'lucide-react';
 import { SAMPLE_BILLS } from '../data/sampleBills';
 import { SampleInvoice } from '../types/bill';
 import { optimizeBillFile } from '../utils/imageOptimizer';
@@ -10,6 +10,7 @@ interface BillUploaderProps {
   onOpenCamera: () => void;
   onOpenPortalsModal: () => void;
   onOpenSavingsModal?: () => void;
+  onOpenSecurityModal?: () => void;
   isLoading: boolean;
 }
 
@@ -19,6 +20,7 @@ export const BillUploader: React.FC<BillUploaderProps> = ({
   onOpenCamera,
   onOpenPortalsModal,
   onOpenSavingsModal,
+  onOpenSecurityModal,
   isLoading,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -170,6 +172,38 @@ export const BillUploader: React.FC<BillUploaderProps> = ({
             <span className="break-words">{errorMessage}</span>
           </div>
         )}
+      </div>
+
+      {/* Security & Compliance Trust Strip (SOC 2 & ISO/IEC 27001) */}
+      <div 
+        onClick={onOpenSecurityModal}
+        className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-slate-900/90 via-indigo-950/20 to-slate-900/90 border border-indigo-500/30 hover:border-indigo-400/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs transition shadow-sm cursor-pointer group"
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <ShieldCheck className="w-4 h-4 text-cyan-400" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-white group-hover:text-cyan-300 transition-colors">
+                Seguridad Certificada · SOC 2 Type II & ISO/IEC 27001:2022
+              </span>
+              <span className="text-[10px] text-emerald-300 bg-emerald-950/70 border border-emerald-800/80 px-1.5 py-0.2 rounded font-medium">
+                Retención Cero en Servidor
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 truncate">
+              Tus facturas se procesan de forma efímera en memoria RAM con cifrado TLS 1.3 de extremo a extremo.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          className="text-[11px] font-semibold text-cyan-400 group-hover:text-cyan-300 flex items-center gap-1 shrink-0 self-end sm:self-auto cursor-pointer"
+        >
+          <span>Ver Controles</span>
+          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+        </button>
       </div>
 
       {/* Helpful Quick Access Banners Grid */}

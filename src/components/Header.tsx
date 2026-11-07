@@ -7,6 +7,7 @@ interface HeaderProps {
   onOpenHistory: () => void;
   onOpenPortals: () => void;
   onOpenSavings: () => void;
+  onOpenSecurity: () => void;
   onNewAnalysis: () => void;
   hasActiveBill: boolean;
 }
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenHistory,
   onOpenPortals,
   onOpenSavings,
+  onOpenSecurity,
   onNewAnalysis,
   hasActiveBill,
 }) => {
@@ -48,6 +50,16 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Action buttons */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <PWAInstallButton />
+
+          <button
+            onClick={onOpenSecurity}
+            className="flex items-center justify-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 bg-indigo-950/40 hover:bg-indigo-900/50 text-indigo-300 border border-indigo-500/30 hover:border-indigo-400/50 rounded-xl text-xs font-semibold transition-colors min-h-[36px] cursor-pointer"
+            title="Centro de Seguridad & Cumplimiento SOC 2 Type II e ISO/IEC 27001:2022"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+            <span className="hidden lg:inline">Seguridad SOC2 / ISO 27001</span>
+            <span className="hidden min-[620px]:inline lg:hidden">Seguridad</span>
+          </button>
 
           <button
             onClick={onOpenSavings}

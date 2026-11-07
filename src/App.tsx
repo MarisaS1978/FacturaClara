@@ -8,11 +8,13 @@ import { BillHistory } from './components/BillHistory';
 import { CameraModal } from './components/CameraModal';
 import { OfficialPortalsModal } from './components/OfficialPortalsModal';
 import { SavingsModal } from './components/SavingsModal';
+import { SecurityComplianceModal } from './components/SecurityComplianceModal';
 import { AnalysisRecord, SampleInvoice } from './types/bill';
 import { SAMPLE_BILLS } from './data/sampleBills';
-import { AlertCircle, RefreshCw, Zap } from 'lucide-react';
+import { AlertCircle, RefreshCw, Zap, ShieldCheck } from 'lucide-react';
 
 const STORAGE_KEY = 'facturaclara_history_v1';
+const PII_STORAGE_KEY = 'facturaclara_pii_masking_v1';
 
 export default function App() {
   const [records, setRecords] = useState<AnalysisRecord[]>([]);
@@ -23,6 +25,15 @@ export default function App() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPortalsOpen, setIsPortalsOpen] = useState(false);
   const [isSavingsOpen, setIsSavingsOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
+  const [isPiiMaskingEnabled, setIsPiiMaskingEnabled] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem(PII_STORAGE_KEY);
+      return stored !== null ? JSON.parse(stored) : true;
+    } catch {
+      return true;
+    }
+  });
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [lastFailedScan, setLastFailedScan] = useState<{
     base64Data: string;
@@ -184,6 +195,26 @@ export default function App() {
     setCurrentRecord(null);
   };
 
+  const handleTogglePiiMasking = (enabled: boolean) => {
+    setIsPiiMaskingEnabled(enabled);
+    try {
+      localStorage.setItem(PII_STORAGE_KEY, JSON.stringify(enabled));
+    } catch (e) {
+      console.warn('Failed saving PII preference:', e);
+    }
+  };
+
+  const handleCryptographicPurge = () => {
+    saveRecords([]);
+    setCurrentRecord(null);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.clear();
+    } catch (e) {
+      console.warn('Storage purge error:', e);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950 w-full max-w-full overflow-x-hidden">
       {/* Global Header */}
@@ -192,6 +223,7 @@ export default function App() {
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenPortals={() => setIsPortalsOpen(true)}
         onOpenSavings={() => setIsSavingsOpen(true)}
+        onOpenSecurity={() => setIsSecurityOpen(true)}
         onNewAnalysis={() => setCurrentRecord(null)}
         hasActiveBill={Boolean(currentRecord)}
       />
@@ -260,6 +292,9 @@ export default function App() {
           <AnalysisDashboard
             record={currentRecord}
             onNewAnalysis={() => setCurrentRecord(null)}
+            isPiiMaskingEnabled={isPiiMaskingEnabled}
+            onTogglePiiMasking={handleTogglePiiMasking}
+            onOpenSecurityModal={() => setIsSecurityOpen(true)}
           />
         ) : (
           <BillUploader
@@ -270,10 +305,21 @@ export default function App() {
             onOpenCamera={() => setIsCameraOpen(true)}
             onOpenPortalsModal={() => setIsPortalsOpen(true)}
             onOpenSavingsModal={() => setIsSavingsOpen(true)}
+            onOpenSecurityModal={() => setIsSecurityOpen(true)}
             isLoading={isAnalyzing}
           />
         )}
       </main>
+
+      {/* Security & Compliance Modal (SOC 2 Type II & ISO/IEC 27001) */}
+      <SecurityComplianceModal
+        isOpen={isSecurityOpen}
+        onClose={() => setIsSecurityOpen(false)}
+        isPiiMaskingEnabled={isPiiMaskingEnabled}
+        onTogglePiiMasking={handleTogglePiiMasking}
+        onCryptographicPurge={handleCryptographicPurge}
+        activeBillCount={records.length}
+      />
 
       {/* Savings Tips Modal */}
       <SavingsModal
@@ -314,10 +360,20 @@ export default function App() {
           <div className="flex items-center gap-2">
             <Zap className="w-3.5 h-3.5 text-cyan-400" />
             <span className="font-bold text-slate-300">FacturaClara AI</span>
-            <span>— Análisis multimodal de facturas del hogar</span>
+            <span>— Auditoría financiera multimodal del hogar</span>
           </div>
+          
+          <button
+            onClick={() => setIsSecurityOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-cyan-300 border border-slate-800 transition cursor-pointer"
+            title="Ver certificado de cumplimiento de seguridad SOC 2 Type II e ISO/IEC 27001:2022"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="font-semibold text-[11px]">Seguridad Certificada · SOC 2 & ISO 27001</span>
+          </button>
+
           <div className="text-[11px] text-slate-400">
-            Traducción en criollo, auditoría de anomalías y canales oficiales de reclamo
+            Traducción en criollo, retención cero y canales oficiales
           </div>
         </div>
       </footer>

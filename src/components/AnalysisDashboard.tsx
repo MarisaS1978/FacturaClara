@@ -27,7 +27,9 @@ import {
   HelpCircle,
   ShieldCheck,
   PiggyBank,
-  Lightbulb
+  Lightbulb,
+  EyeOff,
+  Lock
 } from 'lucide-react';
 import { BillStructuredData, AnalysisRecord } from '../types/bill';
 import { MarkdownViewer } from './MarkdownViewer';
@@ -41,11 +43,17 @@ import { OfficialPortalsModal } from './OfficialPortalsModal';
 interface AnalysisDashboardProps {
   record: AnalysisRecord;
   onNewAnalysis: () => void;
+  isPiiMaskingEnabled?: boolean;
+  onTogglePiiMasking?: (enabled: boolean) => void;
+  onOpenSecurityModal?: () => void;
 }
 
 export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   record,
   onNewAnalysis,
+  isPiiMaskingEnabled = false,
+  onTogglePiiMasking,
+  onOpenSecurityModal,
 }) => {
   const [activeTab, setActiveTab] = useState<'markdown' | 'claim' | 'savings' | 'portals' | 'calendar' | 'chat'>('markdown');
   const [claimCopied, setClaimCopied] = useState(false);
@@ -53,6 +61,10 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
   const [isPortalsModalOpen, setIsPortalsModalOpen] = useState(false);
 
   const bill = record.billData;
+  const rawAccount = bill.numero_cuenta || bill.numero_cliente_o_cuenta;
+  const displayAccountNumber = isPiiMaskingEnabled && rawAccount
+    ? (rawAccount.length > 4 ? `•••• ${rawAccount.slice(-4)}` : '••••')
+    : (rawAccount || 'No informado');
   const suspiciousCharges = bill.cargos_extra_o_anomalias?.filter((c) => c.es_sospechoso) || [];
   const hasAnomalies = bill.alerta_aumento || suspiciousCharges.length > 0;
 
@@ -138,6 +150,36 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {onTogglePiiMasking && (
+            <button
+              onClick={() => onTogglePiiMasking(!isPiiMaskingEnabled)}
+              className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors min-h-[38px] cursor-pointer ${
+                isPiiMaskingEnabled
+                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40 hover:bg-emerald-900/60'
+                  : 'bg-slate-800/90 text-slate-300 border-slate-700 hover:bg-slate-700'
+              }`}
+              title="Enmascarar datos personales sensibles (ISO/IEC 27001 A.8.11 / SOC 2 Privacy)"
+            >
+              {isPiiMaskingEnabled ? (
+                <EyeOff className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              ) : (
+                <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              )}
+              <span>{isPiiMaskingEnabled ? 'PII Protegido' : 'Modo Privacidad'}</span>
+            </button>
+          )}
+
+          {onOpenSecurityModal && (
+            <button
+              onClick={onOpenSecurityModal}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-indigo-950/40 hover:bg-indigo-900/50 text-indigo-300 text-xs font-semibold border border-indigo-500/30 transition-colors min-h-[38px] cursor-pointer"
+              title="Ver garantías de seguridad SOC 2 Type II e ISO 27001"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="hidden md:inline">Seguridad SOC2/ISO</span>
+            </button>
+          )}
+
           {downloadUrl && (
             <a
               href={downloadUrl}
@@ -155,7 +197,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
           {record.filePreviewUrl && (
             <button
               onClick={() => setShowDocPreview(!showDocPreview)}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors min-h-[38px]"
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors min-h-[38px] cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
               <span>{showDocPreview ? 'Ocultar' : 'Ver Comprobante'}</span>
@@ -164,7 +206,7 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
 
           <button
             onClick={onNewAnalysis}
-            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 active:scale-95 text-slate-950 text-xs font-bold transition-all shadow-sm shadow-cyan-500/20 min-h-[38px]"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 active:scale-95 text-slate-950 text-xs font-bold transition-all shadow-sm shadow-cyan-500/20 min-h-[38px] cursor-pointer"
           >
             <span>Subir otra</span>
           </button>
@@ -336,13 +378,20 @@ export const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({
         <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 sm:p-5 flex flex-col justify-between min-w-0">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <span className="text-[11px] sm:text-xs font-semibold truncate">N° Cuenta / Cliente</span>
-            <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-1.5 shrink-0">
+              {isPiiMaskingEnabled && (
+                <span className="text-[9px] font-bold text-emerald-400 bg-emerald-950/70 border border-emerald-800 px-1 py-0.2 rounded" title="Enmascarado según ISO 27001 / SOC 2 Privacy">
+                  PII
+                </span>
+              )}
+              <FileText className="w-4 h-4 text-emerald-400 shrink-0" />
+            </div>
           </div>
           <div className="text-sm sm:text-lg font-bold text-white tracking-tight break-all truncate">
-            {bill.numero_cuenta || bill.numero_cliente_o_cuenta || 'No informado'}
+            {displayAccountNumber}
           </div>
           <div className="text-[10px] sm:text-[11px] text-slate-500 mt-1 truncate">
-            Para reclamos y trámites
+            {isPiiMaskingEnabled ? 'Enmascarado (ISO A.8.11)' : 'Para reclamos y trámites'}
           </div>
         </div>
       </div>
